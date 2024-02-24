@@ -17,10 +17,6 @@ services:
       - ${LAMBDA_PORT}:8080
     command: app.lambda_handler # ここは固定とする。これに合わせてファイルを作る。
     environment:
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
-      - AWS_REGION=ap-northeast-1
       - PYTHONDONTWRITEBYTECODE=1 # pycacheが出ないようにする
   # unittest実行用のコンテナ
   # docker compose run --rm unittest sample/tests/hoge_test.py とかで実行する
@@ -32,10 +28,6 @@ services:
       - ./lambda:/app
     working_dir: /app
     environment:
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
-      - AWS_REGION=ap-northeast-1
       - PYTHONDONTWRITEBYTECODE=1 # pycacheが出ないようにする
     profiles:
       - unittest
