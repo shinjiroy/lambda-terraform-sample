@@ -1,0 +1,52 @@
+version: '3'
+services:
+  terraform:
+    image: alpine/terragrunt:latest
+    volumes:
+      - .:/apps
+    environment:
+      - TZ=Asia/Tokyo
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
+      - AWS_REGION=ap-northeast-1
+  # ローカルでLambdaを実行、起動するやつ
+  lambda:
+    image: ${COMPOSE_PROJECT_NAME}-lambda:latest
+    ports:
+      - ${LAMBDA_PORT}:8080
+    command: app.lambda_handler # ここは固定とする。これに合わせてファイルを作る。
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
+      - AWS_REGION=ap-northeast-1
+      - PYTHONDONTWRITEBYTECODE=1 # pycacheが出ないようにする
+  # unittest実行用のコンテナ
+  # docker compose run --rm unittest sample/tests/hoge_test.py とかで実行する
+  unittest:
+    build:
+      context: .
+      dockerfile: ./local/unittest/Dockerfile
+    volumes:
+      - ./lambda:/app
+    working_dir: /app
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
+      - AWS_REGION=ap-northeast-1
+      - PYTHONDONTWRITEBYTECODE=1 # pycacheが出ないようにする
+    profiles:
+      - unittest
+    entrypoint: /usr/local/bin/python
+  # Lambdaのビルド用のコンテナ
+  # docker compose run --rm builder で実行する
+  builder:
+    image: python:3.12-slim-bullseye
+    volumes:
+      - .:/app
+    working_dir: /app
+    entrypoint: /app/local/builder/entrypoint.sh
+    profiles:
+      - builder
